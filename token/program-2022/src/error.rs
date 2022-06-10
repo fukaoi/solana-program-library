@@ -135,9 +135,23 @@ pub enum TokenError {
     /// mint and try again
     #[error("An account can only be closed if its withheld fee balance is zero, harvest fees to the mint and try again")]
     AccountHasWithheldTransferFees,
+
     /// No memo in previous instruction; required for recipient to receive a transfer
     #[error("No memo in previous instruction; required for recipient to receive a transfer")]
     NoMemo,
+    /// Transfer is disabled for this mint
+    #[error("Transfer is disabled for this mint")]
+    NonTransferable,
+    /// Non-transferable tokens can't be minted to an account without immutable ownership
+    #[error("Non-transferable tokens can't be minted to an account without immutable ownership")]
+    NonTransferableNeedsImmutableOwnership,
+    /// The total number of `Deposit` and `Transfer` instructions to an account cannot exceed the
+    /// associated `maximum_pending_balance_credit_counter`
+    #[error(
+        "The total number of `Deposit` and `Transfer` instructions to an account cannot exceed
+            the associated `maximum_pending_balance_credit_counter`"
+    )]
+    MaximumPendingBalanceCreditCounterExceeded,
 }
 impl From<TokenError> for ProgramError {
     fn from(e: TokenError) -> Self {

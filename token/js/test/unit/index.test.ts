@@ -13,6 +13,9 @@ import {
     TokenOwnerOffCurveError,
     getAccountLen,
     ExtensionType,
+    getAssociatedTokenAddressSync,
+    createInitializeAccount2Instruction,
+    createInitializeAccount3Instruction,
 } from '../../src';
 
 chai.use(chaiAsPromised);
@@ -41,6 +44,26 @@ describe('spl-token instructions', () => {
         const ix = createSyncNativeInstruction(Keypair.generate().publicKey);
         expect(ix.programId).to.eql(TOKEN_PROGRAM_ID);
         expect(ix.keys).to.have.length(1);
+    });
+
+    it('InitializeAccount2', () => {
+        const ix = createInitializeAccount2Instruction(
+            Keypair.generate().publicKey,
+            Keypair.generate().publicKey,
+            Keypair.generate().publicKey
+        );
+        expect(ix.programId).to.eql(TOKEN_PROGRAM_ID);
+        expect(ix.keys).to.have.length(3);
+    });
+
+    it('InitializeAccount3', () => {
+        const ix = createInitializeAccount3Instruction(
+            Keypair.generate().publicKey,
+            Keypair.generate().publicKey,
+            Keypair.generate().publicKey
+        );
+        expect(ix.programId).to.eql(TOKEN_PROGRAM_ID);
+        expect(ix.keys).to.have.length(2);
     });
 });
 
@@ -116,6 +139,43 @@ describe('state', () => {
         expect(associatedPublicKey2.toString()).to.eql(
             new PublicKey('F3DmXZFqkfEWFA7MN2vDPs813GeEWPaT6nLk4PSGuWJd').toString()
         );
+    });
+
+    it('getAssociatedTokenAddressSync matches getAssociatedTokenAddress', async () => {
+        const asyncAssociatedPublicKey = await getAssociatedTokenAddress(
+            new PublicKey('7o36UsWR1JQLpZ9PE2gn9L4SQ69CNNiWAXd4Jt7rqz9Z'),
+            new PublicKey('B8UwBUUnKwCyKuGMbFKWaG7exYdDk2ozZrPg72NyVbfj')
+        );
+        const associatedPublicKey = getAssociatedTokenAddressSync(
+            new PublicKey('7o36UsWR1JQLpZ9PE2gn9L4SQ69CNNiWAXd4Jt7rqz9Z'),
+            new PublicKey('B8UwBUUnKwCyKuGMbFKWaG7exYdDk2ozZrPg72NyVbfj')
+        );
+        expect(associatedPublicKey.toString()).to.eql(
+            new PublicKey('DShWnroshVbeUp28oopA3Pu7oFPDBtC1DBmPECXXAQ9n').toString()
+        );
+        expect(asyncAssociatedPublicKey.toString()).to.eql(associatedPublicKey.toString());
+
+        expect(function () {
+            getAssociatedTokenAddressSync(
+                new PublicKey('7o36UsWR1JQLpZ9PE2gn9L4SQ69CNNiWAXd4Jt7rqz9Z'),
+                associatedPublicKey
+            );
+        }).to.throw(TokenOwnerOffCurveError);
+
+        const asyncAssociatedPublicKey2 = await getAssociatedTokenAddress(
+            new PublicKey('7o36UsWR1JQLpZ9PE2gn9L4SQ69CNNiWAXd4Jt7rqz9Z'),
+            asyncAssociatedPublicKey,
+            true
+        );
+        const associatedPublicKey2 = getAssociatedTokenAddressSync(
+            new PublicKey('7o36UsWR1JQLpZ9PE2gn9L4SQ69CNNiWAXd4Jt7rqz9Z'),
+            associatedPublicKey,
+            true
+        );
+        expect(associatedPublicKey2.toString()).to.eql(
+            new PublicKey('F3DmXZFqkfEWFA7MN2vDPs813GeEWPaT6nLk4PSGuWJd').toString()
+        );
+        expect(asyncAssociatedPublicKey2.toString()).to.eql(associatedPublicKey2.toString());
     });
 });
 
